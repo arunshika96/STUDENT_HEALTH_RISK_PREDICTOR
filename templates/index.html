@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Health Risk Predictor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <div>
+      <h1>Student Health Risk Predictor</h1>
+      <p class="subtitle">Lifestyle-based risk estimate &middot; Computational Intelligence Mini Project</p>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="panel form-panel">
+    <h2>Enter your readings</h2>
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/predict">
+
+      <fieldset>
+        <legend>Vitals &amp; activity</legend>
+
+        <div class="field-grid">
+          <label>Sleep duration (hrs)
+            <input type="number" step="0.01" min="0" max="24" name="sleep_duration" value="{{ form_values.sleep_duration if form_values else '7.0' }}" required>
+          </label>
+
+          <label>Heart rate (bpm)
+            <input type="number" step="0.1" min="30" max="220" name="heart_rate" value="{{ form_values.heart_rate if form_values else '75' }}" required>
+          </label>
+
+          <label>BMI
+            <input type="number" step="0.01" min="10" max="60" name="bmi" value="{{ form_values.bmi if form_values else '23' }}" required>
+          </label>
+
+          <label>Calorie expenditure (kcal/day)
+            <input type="number" step="1" min="0" name="calorie_expenditure" value="{{ form_values.calorie_expenditure if form_values else '2200' }}" required>
+          </label>
+
+          <label>Step count (per day)
+            <input type="number" step="1" min="0" name="step_count" value="{{ form_values.step_count if form_values else '8000' }}" required>
+          </label>
+
+          <label>Exercise duration (min/day)
+            <input type="number" step="0.1" min="0" name="exercise_duration" value="{{ form_values.exercise_duration if form_values else '30' }}" required>
+          </label>
+
+          <label>Water intake (litres/day)
+            <input type="number" step="0.01" min="0" max="10" name="water_intake" value="{{ form_values.water_intake if form_values else '2.0' }}" required>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lifestyle profile</legend>
+
+        <div class="field-grid">
+          <label>Diet type
+            <select name="diet_type" required>
+              <option value="balanced" {{ 'selected' if form_values and form_values.diet_type=='balanced' }}>Balanced</option>
+              <option value="veg" {{ 'selected' if form_values and form_values.diet_type=='veg' }}>Vegetarian</option>
+              <option value="non-veg" {{ 'selected' if form_values and form_values.diet_type=='non-veg' }}>Non-vegetarian</option>
+            </select>
+          </label>
+
+          <label>Stress level
+            <select name="stress_level" required>
+              <option value="low" {{ 'selected' if form_values and form_values.stress_level=='low' }}>Low</option>
+              <option value="medium" {{ 'selected' if form_values and form_values.stress_level=='medium' }}>Medium</option>
+              <option value="high" {{ 'selected' if form_values and form_values.stress_level=='high' }}>High</option>
+            </select>
+          </label>
+
+          <label>Sleep quality
+            <select name="sleep_quality" required>
+              <option value="good" {{ 'selected' if form_values and form_values.sleep_quality=='good' }}>Good</option>
+              <option value="average" {{ 'selected' if form_values and form_values.sleep_quality=='average' }}>Average</option>
+              <option value="poor" {{ 'selected' if form_values and form_values.sleep_quality=='poor' }}>Poor</option>
+            </select>
+          </label>
+
+          <label>Physical activity level
+            <select name="physical_activity_level" required>
+              <option value="active" {{ 'selected' if form_values and form_values.physical_activity_level=='active' }}>Active</option>
+              <option value="moderate" {{ 'selected' if form_values and form_values.physical_activity_level=='moderate' }}>Moderate</option>
+              <option value="sedentary" {{ 'selected' if form_values and form_values.physical_activity_level=='sedentary' }}>Sedentary</option>
+            </select>
+          </label>
+
+          <label>Smoking / alcohol use
+            <select name="smoking_alcohol" required>
+              <option value="no" {{ 'selected' if form_values and form_values.smoking_alcohol=='no' }}>No</option>
+              <option value="occasional" {{ 'selected' if form_values and form_values.smoking_alcohol=='occasional' }}>Occasional</option>
+              <option value="yes" {{ 'selected' if form_values and form_values.smoking_alcohol=='yes' }}>Yes</option>
+            </select>
+          </label>
+
+          <label>Gender
+            <select name="gender" required>
+              <option value="female" {{ 'selected' if form_values and form_values.gender=='female' }}>Female</option>
+              <option value="male" {{ 'selected' if form_values and form_values.gender=='male' }}>Male</option>
+              <option value="other" {{ 'selected' if form_values and form_values.gender=='other' }}>Other</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="submit-btn">Predict health risk</button>
+    </form>
+  </section>
+
+  <section class="panel result-panel">
+    <h2>Result</h2>
+
+    {% if prediction %}
+      <div class="result result--{{ prediction }}">
+        <span class="result-label">{{ prediction }}</span>
+        <p class="result-desc">{{ description }}</p>
+      </div>
+
+      {% if probabilities %}
+        <h3>Confidence breakdown</h3>
+        <div class="bars">
+          {% for label, pct in probabilities.items() %}
+            <div class="bar-row">
+              <span class="bar-name">{{ label }}</span>
+              <div class="bar-track">
+                <div class="bar-fill bar-fill--{{ label }}" style="width: {{ pct }}%;"></div>
+              </div>
+              <span class="bar-pct">{{ pct }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="placeholder">Fill in the form and submit to see a prediction here.</p>
+    {% endif %}
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p>CIS 6005 Computational Intelligence &middot; Model: XGBoost classifier trained on Kaggle Playground Series S6E7 data. For educational demonstration only — not medical advice.</p>
+</footer>
+
+</body>
+</html>
