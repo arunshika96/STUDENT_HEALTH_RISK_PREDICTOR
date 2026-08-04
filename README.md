@@ -1,96 +1,62 @@
-# Student Health Risk Predictor — Web App
+# Student Health Risk Predictor
 
-Flask web application that uses your trained model (`models/best_model.pkl`,
-an XGBoost classifier) to predict a student's health risk category —
-**at-risk**, **fit**, or **unhealthy** — from 13 lifestyle/health inputs.
+A Flask-based web application that predicts student health risk categories (**at-risk, fit, or unhealthy**) based on lifestyle and biometric indicators. This project was developed as part of the **CIS 6005 Computational Intelligence** assignment.
 
-Built for CIS 6005 Computational Intelligence — "Deep learning Plus AI Mini
-project" (Kaggle Playground Series S6E7: Predicting Student Health Risk).
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-2.0%2B-green)
+![ML](https://img.shields.io/badge/ML-XGBoost%20%7C%20Scikit--learn-orange)
 
-## How to run
+---
 
-1. Install dependencies (Python 3.9+ recommended):
+## Table of Contents
+- [Project Structure](#project-structure)
+- [Technologies Used](#technologies-used)
+- [Installation & Setup](#installation--setup)
+- [How to Run the Web App](#how-to-run-the-web-app)
+- [How to Train the Models](#how-to-train-the-models)
+- [Features](#features)
 
+---
+
+## Project Structure
+
+STUDENT_HEALTH_RISK_PREDICTOR/
+├── health_risk_app/ # The Flask web application
+│ ├── app.py # Main Flask backend
+│ ├── models/ # Contains pre-trained .pkl model files
+│ │ ├── best_model.pkl # Best XGBoost model used by the app
+│ │ ├── xgboost.pkl
+│ │ └── ...
+│ ├── static/ # CSS and static assets
+│ ├── templates/ # HTML templates (index.html)
+│ ├── .env # Local environment variables (ignored by Git)
+│ ├── .gitignore # Git ignore rules for the web app
+│ └── requirements.txt # Web app dependencies
+├── outputs/ # Training logs and visualizations
+├── submission.csv # Generated assignment output data
+├── train_model.py # Main script to train and save all models
+├── model_training.py # Core ML training logic
+├── predict.py # Script to run predictions via CLI
+├── compress_model.py # Utility to compress model sizes
+├── requirements.txt # Root-level dependencies (ML + Web)
+├── .gitattributes # Git LFS config for large .pkl files
+└── README.md # Project documentation
+
+
+---
+
+## Technologies Used
+- **Web Framework:** Python (Flask)
+- **Machine Learning:** Scikit-learn, XGBoost
+- **Data Processing:** Pandas, NumPy
+- **Model Serialization:** Joblib
+- **Version Control:** Git LFS (for managing large model files)
+
+---
+
+## Installation & Setup
+
+1. Clone the repository to your local machine:
    ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Start the app:
-
-   ```bash
-   python app.py
-   ```
-
-3. Open your browser at **http://127.0.0.1:5000**
-
-4. Fill in the form and click "Predict health risk" to see the predicted
-   category and the model's confidence breakdown across all three classes.
-
-## Project structure
-
-```
-health_risk_app/
-├── app.py                # Flask backend: routes, encoding, prediction
-├── requirements.txt
-├── models/
-│   ├── best_model.pkl     # Best-performing model (XGBoost) — used by default
-│   ├── decision_tree.pkl
-│   ├── neural_network.pkl
-│   ├── svm.pkl
-│   └── xgboost.pkl
-├── templates/
-│   └── index.html         # Form + result page
-└── static/
-    └── style.css
-```
-
-## Switching models
-
-By default the app uses `models/best_model.pkl`. To demonstrate a different
-model in your report/demo, change `MODEL_PATH` at the top of `app.py`, e.g.:
-
-```python
-MODEL_PATH = "models/decision_tree.pkl"
-```
-
-Note: `neural_network.pkl` and `svm.pkl` don't support `predict_proba`
-directly in all configurations — check before switching if you want the
-confidence bars to appear (SVM's `LinearSVC` does not expose
-`predict_proba` at all, so the app will simply not show a confidence
-breakdown for it).
-
-## Important: why the encoding logic matters
-
-`app.py` manually re-implements the same preprocessing used in
-`model_training.py` (via your cleaned dataset):
-
-- **Missing values**: numeric columns imputed with median, categorical
-  columns imputed with mode (this only matters for offline evaluation —
-  the web form requires every field, so no missing values reach the model).
-- **Categorical encoding**: each category column was label-encoded in
-  alphabetical order (matches sklearn's default `LabelEncoder` behaviour),
-  e.g. `diet_type`: balanced=0, non-veg=1, veg=2.
-- **Target decoding**: `0=at-risk, 1=fit, 2=unhealthy` (alphabetical order
-  of the original `health_condition` labels).
-
-This was verified by re-running `decision_tree.pkl` against `train.csv`
-with this exact encoding scheme and confirming ~98.8% agreement with the
-original training predictions — i.e. this encoding is what your model was
-actually trained on.
-
-If you later find your original cleaning script and it encoded things
-differently, update the `*_MAP` dictionaries near the top of `app.py`
-to match.
-
-## Packaging as a "production style" deliverable
-
-For the assignment brief, this satisfies the requirement to "package your
-trained model into a usable application" (web app option). For your
-report's System Architecture section (task d), you can describe:
-
-- **Frontend**: HTML form (Jinja2 templates) collecting 13 raw inputs
-- **Backend**: Flask route `/predict` that encodes inputs identically to
-  training, loads the serialized model via `joblib`, and returns a
-  prediction + class probabilities
-- **Model layer**: pre-trained XGBoost classifier serialized with `joblib`,
-  loaded once at app startup (not retrained per request)
+   git clone https://github.com/arunshika96/STUDENT_HEALTH_RISK_PREDICTOR.git
+   
